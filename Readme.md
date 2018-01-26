@@ -1,4 +1,4 @@
-**Unfortunately I don't use Telegram anymore and won't be providing updates for this, however, I'll still accept PRs.**
+Forked from onedr0p, working to port to Radarr for movie support. Will hopefully add support for use in a group chat. 
 
 # telegram-sonarr-bot
 
