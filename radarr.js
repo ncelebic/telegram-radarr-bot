@@ -21,6 +21,8 @@ var acl    = require(__dirname + '/lib/acl');           // set up the acl file
  */
 var SonarrMessage = require(__dirname + '/modules/SonarrMessage');
 
+console.log("flag1");
+
 /*
  * modules
  */
@@ -46,40 +48,313 @@ bot.getMe().then(function(msg) {
   throw new Error(err);
 });
 
+console.log("TEST");
+
+function echoCmd(msg, match) {
+  console.log("echo");
+
+  var fromId = msg.from.id;
+  var resp = match;
+  bot.sendMessage(fromId, resp);
+};
+
 /*
  * handle start command
  */
-bot.onText(/\/start/, function(msg) {
+function startCmd(msg) {
   var fromId = msg.from.id;
 
   verifyUser(fromId);
 
   logger.info(i18n.__('logUserStartCommand'), fromId);
   sendCommands(fromId);
-});
+};
 
 /*
  * handle help command
  */
-bot.onText(/\/help/, function(msg) {
+function helpCmd(msg) {
   var fromId = msg.from.id;
   
   verifyUser(fromId);
 
   logger.info(i18n.__('logUserHelpCommand', fromId));
   sendCommands(fromId);
-});
+};
+
+/*
+ * handle authorization
+ */
+function authCmd(msg, match) {
+  console.log("TEST4");
+  var fromId = msg.from.id;
+  var password = match;
+
+  var message = [];
+
+  if (isAuthorized(fromId)) {
+    message.push(i18n.__('botChatAuthAlreadyAuthorized_1'));
+    message.push(i18n.__('botChatAuthAlreadyAuthorized_2'));
+    return bot.sendMessage(fromId, message.join('\n'));
+  }
+
+  // make sure the user is not banned
+  if (isRevoked(fromId)) {
+    message.push(i18n.__('botChatAuthIsRevoked_1'));
+    message.push(i18n.__('botChatAuthIsRevoked_2'));
+    return bot.sendMessage(fromId, message.join('\n'));
+  }
+
+  if (password !== config.bot.password) {
+    return replyWithError(fromId, new Error(i18n.__('errorInvalidPassowrd')));
+  }
+
+  acl.allowedUsers.push(msg.from);
+  updateACL();
+
+  if (acl.allowedUsers.length === 1) {
+    promptOwnerConfig(fromId);
+  }
+
+  if (config.bot.owner) {
+    bot.sendMessage(config.bot.owner, i18n.__('botChatAuthUserWasGranted', getTelegramName(msg.from)));
+  }
+
+  message.push(i18n.__('botChatAuthGranted_1'));
+  message.push(i18n.__('botChatAuthGranted_2'));
+
+  bot.sendMessage(fromId, message.join('\n'));
+};
+
+/*
+ * handle users
+ */
+function usersCmd(msg, match){
+  var fromId = msg.from.id;
+  
+  verifyAdmin(fromId);
+  if(isAdmin(fromId)){
+
+  var response = [i18n.__('botChatUsers')];
+  _.forEach(acl.allowedUsers, function(n, key) {
+    response.push('➸ ' + getTelegramName(n));
+  });
+
+    return bot.sendMessage(fromId, response.join('\n'));
+    //return bot.sendMessage(fromId, response.join('\n'), {
+    //  'disable_web_page_preview': true,
+    //  'parse_mode': 'Markdown',
+    //  'selective': 2,
+    //});
+  } 
+
+};
+
+/*
+ * handle user access revocation
+ */
+function revokeCmd(msg, match) {
+  var fromId = msg.from.id;
+
+  verifyAdmin(fromId);
+  if(isAdmin(fromId)){
+    var opts = {};
+
+    if (!acl.allowedUsers.length) {
+      var message = 'There aren\'t any allowed users.';
+
+      opts = {
+        'disable_web_page_preview': true,
+        'parse_mode': 'Markdown',
+        'selective': 2,
+      };
+
+      return bot.sendMessage(fromId, message, opts);
+    }
+
+    var keyboardList = [], keyboardRow = [], revokeList = [];
+    var response = ['*Allowed Users:*'];
+    _.forEach(acl.allowedUsers, function(n, key) {
+      revokeList.push({
+        'id': key + 1,
+        'userId': n.id,
+        'keyboardValue': getTelegramName(n)
+      });
+      response.push('➸ ' + getTelegramName(n));
+
+      keyboardRow.push(getTelegramName(n));
+      if (keyboardRow.length === 2) {
+        keyboardList.push(keyboardRow);
+        keyboardRow = [];
+      }
+    });
+
+    response.push(i18n.__('selectFromMenu'));
+
+
+    if (keyboardRow.length === 1) {
+      keyboardList.push([keyboardRow[0]]);
+    }
+
+    // set cache
+    cache.set('state' + fromId, state.admin.REVOKE);
+    cache.set('revokeUserList' + fromId, revokeList);
+    
+    var message = response.join('\n');
+    
+    return bot.sendMessage(fromId, message, {
+      'disable_web_page_preview': true,
+      'parse_mode': 'Markdown',
+      'selective': 2,
+      'reply_markup': JSON.stringify({ keyboard: keyboardList, one_time_keyboard: true }),
+    });
+  }
+};
+
+/*
+ * handle user access unrevocation
+ */
+function unrevokeCmd(msg, match){
+  var fromId = msg.from.id;
+
+  verifyAdmin(fromId);
+  if(isAdmin(fromId)){
+    var opts = {};
+
+    if (!acl.revokedUsers.length) {
+      var message = 'There aren\'t any revoked users.';
+
+      return bot.sendMessage(fromId, message, {
+        'disable_web_page_preview': true,
+        'parse_mode': 'Markdown',
+        'selective': 2,
+      });
+    }
+
+    var keyboardList = [], keyboardRow = [], revokeList = [];
+    var response = ['*Revoked Users:*'];
+    _.forEach(acl.revokedUsers, function(n, key) {
+      revokeList.push({
+        'id': key + 1,
+        'userId': n.id,
+        'keyboardValue': getTelegramName(n)
+      });
+
+      response.push('➸ ' + getTelegramName(n));
+
+      keyboardRow.push(getTelegramName(n));
+      if (keyboardRow.length == 2) {
+        keyboardList.push(keyboardRow);
+        keyboardRow = [];
+      }
+    });
+
+    response.push(i18n.__('selectFromMenu'));
+
+    if (keyboardRow.length === 1) {
+      keyboardList.push([keyboardRow[0]]);
+    }
+
+    // set cache
+    cache.set('state' + fromId, state.admin.UNREVOKE);
+    cache.set('unrevokeUserList' + fromId, revokeList);
+
+    return bot.sendMessage(fromId, response.join('\n'), {
+      'disable_web_page_preview': true,
+      'parse_mode': 'Markdown',
+      'selective': 2,
+      'reply_markup': JSON.stringify({ keyboard: keyboardList, one_time_keyboard: true })
+    });
+  }
+};
+
+/*
+ * handle clear command
+ */
+function clearCmd(msg) {
+  var fromId = msg.from.id;
+  
+  if(isAuthorized(fromId)){
+    logger.info('user: %s, message: sent \'/clear\' command', fromId);
+    clearCache(fromId);
+    logger.info('user: %s, message: \'/clear\' command successfully executed', fromId);
+
+    return bot.sendMessage(fromId, 'All previously sent commands have been cleared, yey!', {
+      'reply_markup': {
+        'hide_keyboard': true
+      }
+     });
+   } else {
+     return replyWithError(fromId, new Error(i18n.__('notAuthorized')))
+   }
+};
 
 /*
  * handle sonarr commands
  */
 bot.on('message', function(msg) {
-  var user    = msg.from;
-  var message = msg.text;
+
+  /*
+  Fixing escape-less nonsense
+  */
+
+ console.log("TEST2" + msg.text);
+ var user    = msg.from;
+ var message = msg.text;
+
+  if (/^\/auth\s?(.+)?$/g.test(message)) {
+    var text = /^\/auth\s?(.+)?/g.exec(message) [1] || null;
+    console.log("authFlag");
+    return (authCmd(msg, text));
+
+  }
+
+  if (/^\/echo\s?(.+)?$/g.test(message)) {
+    var text = /^\/echo\s?(.+)?/g.exec(message) [1] || null;
+    console.log("echoFlag");
+    return (echoCmd(msg, text));
+  }
+
+  if (/^\/clear\s?(.+)?$/g.test(message)) {
+    console.log("clearFlag");
+    return (clearCmd(msg));
+  }
+
+  if (/^\/unrevoke\s?(.+)?$/g.test(message)) {
+    console.log("unrevokeFlag");
+    return (unrevokeCmd(msg));
+  }
+
+  if (/^\/revoke\s?(.+)?$/g.test(message)) {
+    console.log("revokeFlag");
+    return (revokeCmd(msg));
+  }
+
+  if (/^\/users\s?(.+)?$/g.test(message)) {
+    console.log("usersFlag");
+    return (usersCmd(msg));
+  }
+
+  if (/^\/help\s?(.+)?$/g.test(message)) {
+    console.log("helpFlag");
+    return (helpCmd(msg));
+  }
+
+  if (/^\/start\s?(.+)?$/g.test(message)) {
+    console.log("startFlag");
+    return (startCmd(msg));
+  }
+
+
+
+
+  
  
   var sonarr = new SonarrMessage(bot, user, cache);
+  console.log("TEST3");
 
   if (/^\/library\s?(.+)?$/g.test(message)) {
+    console.log("libcheck");
     if(isAuthorized(user.id)){
        var searchText = /^\/library\s?(.+)?/g.exec(message)[1] || null;
        return sonarr.performLibrarySearch(searchText);
@@ -136,7 +411,7 @@ bot.on('message', function(msg) {
   if (/^\/[Qq](uery)? (.+)$/g.test(message)) {
     if(isAuthorized(user.id)){
        var seriesName = /^\/[Qq](uery)? (.+)/g.exec(message)[2] || null;
-       return sonarr.sendSeriesList(seriesName);
+       return sonarr.sendMoviesList(seriesName);
     } else {
        return replyWithError(user.id, new Error(i18n.__('notAuthorized')));     
     }
@@ -167,13 +442,13 @@ bot.on('message', function(msg) {
 
   if (currentState === state.sonarr.CONFIRM) {
     verifyUser(user.id);
-    logger.info(i18n.__('botChatQuerySeriesConfirm', user.id, message));
+    logger.info(i18n.__('botChatQueryMoviesConfirm', user.id, message));
     return sonarr.confirmShowSelect(message);
   }
 
   if (currentState === state.sonarr.PROFILE) {
     verifyUser(user.id);
-    logger.info(i18n.__('botChatQuerySeriesChoose', user.id, message));
+    logger.info(i18n.__('botChatQueryMoviesChoose', user.id, message));
     return sonarr.sendProfileList(message);
   }
 
@@ -203,216 +478,14 @@ bot.on('message', function(msg) {
 
   if (currentState === state.sonarr.ADD_SERIES) {
     verifyUser(user.id);
-    return sonarr.sendAddSeries(message);
+    return sonarr.sendAddMovie(message);
   }
 
-});
-
-/*
- * handle authorization
- */
-bot.onText(/\/auth (.+)/, function(msg, match) {
-  var fromId = msg.from.id;
-  var password = match[1];
-
-  var message = [];
-
-  if (isAuthorized(fromId)) {
-    message.push(i18n.__('botChatAuthAlreadyAuthorized_1'));
-    message.push(i18n.__('botChatAuthAlreadyAuthorized_2'));
-    return bot.sendMessage(fromId, message.join('\n'));
-  }
-
-  // make sure the user is not banned
-  if (isRevoked(fromId)) {
-    message.push(i18n.__('botChatAuthIsRevoked_1'));
-    message.push(i18n.__('botChatAuthIsRevoked_2'));
-    return bot.sendMessage(fromId, message.join('\n'));
-  }
-
-  if (password !== config.bot.password) {
-    return replyWithError(fromId, new Error(i18n.__('errorInvalidPassowrd')));
-  }
-
-  acl.allowedUsers.push(msg.from);
-  updateACL();
-
-  if (acl.allowedUsers.length === 1) {
-    promptOwnerConfig(fromId);
-  }
-
-  if (config.bot.owner) {
-    bot.sendMessage(config.bot.owner, i18n.__('botChatAuthUserWasGranted', getTelegramName(msg.from)));
-  }
-
-  message.push(i18n.__('botChatAuthGranted_1'));
-  message.push(i18n.__('botChatAuthGranted_2'));
-
-  return bot.sendMessage(fromId, message.join('\n'));
-});
-
-/*
- * handle users
- */
-bot.onText(/\/users/, function(msg) {
-  var fromId = msg.from.id;
   
-  verifyAdmin(fromId);
-  if(isAdmin(fromId)){
-
-  var response = [i18n.__('botChatUsers')];
-  _.forEach(acl.allowedUsers, function(n, key) {
-    response.push('➸ ' + getTelegramName(n));
-  });
-
-    return bot.sendMessage(fromId, response.join('\n'));
-    //return bot.sendMessage(fromId, response.join('\n'), {
-    //  'disable_web_page_preview': true,
-    //  'parse_mode': 'Markdown',
-    //  'selective': 2,
-    //});
-  } 
 
 });
 
-/*
- * handle user access revocation
- */
-bot.onText(/\/revoke/, function(msg) {
-  var fromId = msg.from.id;
 
-  verifyAdmin(fromId);
-  if(isAdmin(fromId)){
-    var opts = {};
-
-    if (!acl.allowedUsers.length) {
-      var message = 'There aren\'t any allowed users.';
-
-      opts = {
-        'disable_web_page_preview': true,
-        'parse_mode': 'Markdown',
-        'selective': 2,
-      };
-
-      return bot.sendMessage(fromId, message, opts);
-    }
-
-    var keyboardList = [], keyboardRow = [], revokeList = [];
-    var response = ['*Allowed Users:*'];
-    _.forEach(acl.allowedUsers, function(n, key) {
-      revokeList.push({
-        'id': key + 1,
-        'userId': n.id,
-        'keyboardValue': getTelegramName(n)
-      });
-      response.push('➸ ' + getTelegramName(n));
-
-      keyboardRow.push(getTelegramName(n));
-      if (keyboardRow.length === 2) {
-        keyboardList.push(keyboardRow);
-        keyboardRow = [];
-      }
-    });
-
-    response.push(i18n.__('selectFromMenu'));
-
-
-    if (keyboardRow.length === 1) {
-      keyboardList.push([keyboardRow[0]]);
-    }
-
-    // set cache
-    cache.set('state' + fromId, state.admin.REVOKE);
-    cache.set('revokeUserList' + fromId, revokeList);
-    
-    var message = response.join('\n');
-    
-    return bot.sendMessage(fromId, message, {
-      'disable_web_page_preview': true,
-      'parse_mode': 'Markdown',
-      'selective': 2,
-      'reply_markup': JSON.stringify({ keyboard: keyboardList, one_time_keyboard: true }),
-    });
-  }
-});
-
-/*
- * handle user access unrevocation
- */
-bot.onText(/\/unrevoke/, function(msg) {
-  var fromId = msg.from.id;
-
-  verifyAdmin(fromId);
-  if(isAdmin(fromId)){
-    var opts = {};
-
-    if (!acl.revokedUsers.length) {
-      var message = 'There aren\'t any revoked users.';
-
-      return bot.sendMessage(fromId, message, {
-        'disable_web_page_preview': true,
-        'parse_mode': 'Markdown',
-        'selective': 2,
-      });
-    }
-
-    var keyboardList = [], keyboardRow = [], revokeList = [];
-    var response = ['*Revoked Users:*'];
-    _.forEach(acl.revokedUsers, function(n, key) {
-      revokeList.push({
-        'id': key + 1,
-        'userId': n.id,
-        'keyboardValue': getTelegramName(n)
-      });
-
-      response.push('➸ ' + getTelegramName(n));
-
-      keyboardRow.push(getTelegramName(n));
-      if (keyboardRow.length == 2) {
-        keyboardList.push(keyboardRow);
-        keyboardRow = [];
-      }
-    });
-
-    response.push(i18n.__('selectFromMenu'));
-
-    if (keyboardRow.length === 1) {
-      keyboardList.push([keyboardRow[0]]);
-    }
-
-    // set cache
-    cache.set('state' + fromId, state.admin.UNREVOKE);
-    cache.set('unrevokeUserList' + fromId, revokeList);
-
-    return bot.sendMessage(fromId, response.join('\n'), {
-      'disable_web_page_preview': true,
-      'parse_mode': 'Markdown',
-      'selective': 2,
-      'reply_markup': JSON.stringify({ keyboard: keyboardList, one_time_keyboard: true })
-    });
-  }
-});
-
-/*
- * handle clear command
- */
-bot.onText(/\/clear/, function(msg) {
-  var fromId = msg.from.id;
-  
-  if(isAuthorized(fromId)){
-    logger.info('user: %s, message: sent \'/clear\' command', fromId);
-    clearCache(fromId);
-    logger.info('user: %s, message: \'/clear\' command successfully executed', fromId);
-
-    return bot.sendMessage(fromId, 'All previously sent commands have been cleared, yey!', {
-      'reply_markup': {
-        'hide_keyboard': true
-      }
-     });
-   } else {
-     return replyWithError(fromId, new Error(i18n.__('notAuthorized')))
-   }
-});
 
 /*
  * @TODO  AdminMessage module ?
@@ -621,7 +694,7 @@ function promptOwnerConfig(userId) {
  */
 function replyWithError(userId, err) {
   logger.warn(i18n.__('logWarnError', userId, err.message));
-  return bot.sendMessage(userId, i18n.__('botChatErrorFormat', err), {
+  return bot.sendMessage(userId, i18n.__('botChatErrorFormat', err.message), {
     'parse_mode': 'Markdown',
     'reply_markup': {
       'hide_keyboard': true

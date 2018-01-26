@@ -1,7 +1,7 @@
 {
-  "name": "telegram-sonarr-bot",
-  "version": "0.3.0",
-  "description": "A Telegram bot to interact with your Sonarr Web App",
+  "name": "telegram-radarr-bot",
+  "version": "0.0.0",
+  "description": "A Telegram bot to interact with your Radarr Web App",
   "dependencies": {
     "bluebird": "v3.0.6",
     "fs-extra": "^0.26.4",
@@ -14,9 +14,9 @@
     "sonarr-api": "^0.1.2",
     "winston": "^2.1.1"
   },
-  "repository": "git://github.com/onedr0p/telegram-sonarr-bot",
+  "repository": "git://github.com/eamondo2/telegram-radarr-bot",
   "keywords": [
-    "sonarr",
+    "radarr",
     "telegram"
   ],
   "engines": {
@@ -24,8 +24,7 @@
   },
   "author": "Devin Buhl <devin.kray@gmail.com>",
   "license": "MIT",
-    "scripts": {
-        "start": "node sonarr.js"
-    }
-
+  "scripts": {
+    "start": "node radarr.js"
+  }
 }
