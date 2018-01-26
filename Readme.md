@@ -1,8 +1,8 @@
 Forked from onedr0p, working to port to Radarr for movie support. Will hopefully add support for use in a group chat. 
 
-# telegram-sonarr-bot
+# telegram-radarr-bot
 
-Bot which lets you or others add series to [Sonarr](https://sonarr.tv/) via the messaging service [Telegram](https://telegram.org/).
+Bot which lets you or others add series to [Radarr](https://radarr.video/) via the messaging service [Telegram](https://telegram.org/).
 
 Contact [@BotFather](http://telegram.me/BotFather) on Telegram to create and get a bot token.
 
@@ -17,12 +17,12 @@ Getting Started
 
 ```bash
 # Clone the repository
-git clone https://github.com/onedr0p/telegram-sonarr-bot
+git clone https://github.com/eamondo2/telegram-radarr-bot
 ```
 
 ```bash
 # Install dependencies
-cd telegram-sonarr-bot
+cd telegram-radarr-bot
 npm install
 ```
 
@@ -46,11 +46,11 @@ Bot:
 - **owner** your Telegram user ID. (you can fill this in later)
 - **notifyId** Telegram ID used for notifications. (optional; you can fill this in later)
 
-Sonarr:
-- **hostname**: hostname where Sonarr runs (required)
-- **apiKey**: Your API to access Sonarr (required)
-- **port**: port number Sonarr is listening on (optional, default: 5050)
-- **urlBase**: URL Base of Sonarr (optional, default: empty)
+Radarr:
+- **hostname**: hostname where Radarr runs (required)
+- **apiKey**: Your API to access Radarr (required)
+- **port**: port number Radarr is listening on (optional, default: 7878)
+- **urlBase**: URL Base of Radarr (optional, default: empty)
 - **ssl**: Set to true if you are connecting via SSL (default: false)
 - **username**: HTTP Auth username (default: empty)
 - **password**: HTTP Auth password (default: empty)
@@ -59,7 +59,7 @@ Sonarr:
 
 ```bash
 # Start the bot
-node sonarr.js
+node radarr.js
 ```
 
 ## Usage (commands)
