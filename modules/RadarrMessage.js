@@ -479,7 +479,6 @@ RadarrMessage.prototype.sendFolderList = function(profileName) {
         if (!result.length) {
             throw new Error(i18n.__('errorRadarrCouldntFindFolders'));
         }
-        console.log(result);
         var folders = result;
 
         logger.info(i18n.__('logRadarrFolderListRequested', self.username));
@@ -502,7 +501,6 @@ RadarrMessage.prototype.sendFolderList = function(profileName) {
         self.cache.set('movieProfileId' + self.user.id, profile.profileId);
         self.cache.set('movieFolderList' + self.user.id, folderList);
         self.cache.set('state' + self.user.id, state.radarr.ADD_MOVIE);
-        console.log(keyboardList);
         return self._sendMessage(response.join('\n'), keyboardList);
     })
         .catch(function(error) {
@@ -612,8 +610,6 @@ RadarrMessage.prototype.sendAddMovie = function(folderName) {
 RadarrMessage.prototype._sendMessage = function(message, keyboard) {
     var self = this;
     keyboard = keyboard || null;
-    console.log(message);
-    console.log(keyboard);
     var options;
     if (message instanceof Error ) {
         logger.warn(i18n.__('logMessageClear', self.username, message.message));
@@ -642,7 +638,6 @@ RadarrMessage.prototype._sendMessage = function(message, keyboard) {
             'reply_markup': JSON.stringify( { keyboard: keyboard, one_time_keyboard: true })
         };
     }
-    console.log(options);
     //if we're in a chat, then send to the chat. 
     if ( self.chat && self.chat.id ){
         var mentionStr = '[' + self.user.first_name + ' ' + self.user.last_name + '](tg://user?id=' + (self.user.id) + ') \n';
