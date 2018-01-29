@@ -74,6 +74,7 @@
 	"botChatRadarrWantedCommandExecuted": "Wanted command sent.",
 	"botChatRadarrMovieAdded": "Movies %s added",
 	"botChatRadarrMovieAddedBy": "Movies %s added by %s",
+	"botChatRadarrDiskUsage" : "Disk Usages: ",
 	"botChatUnrevoke": "*Revoked Users:*",
 	"botChatUnrevokeNoUsers": "There aren't any revoked users.",
 	"botChatUnrevokeConfirmation": "Are you sure you want to unrevoke access for %s ?",
@@ -155,5 +156,6 @@
 	"askUsingSeasonFolders": "*Would you like to use season folders?*",
 	"logRadarrAllSeries": "logRadarrAllSeries",
 	"logRadarrConfirmCorrectMovie": "logRadarrConfirmCorrectMovie",
-	"botChatRadarrSelectMovie": "botChatRadarrSelectMovie"
+	"botChatRadarrSelectMovie": "botChatRadarrSelectMovie",
+	"errorNoDisksFound" : "No Disks Found."
 }

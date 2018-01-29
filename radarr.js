@@ -21,7 +21,6 @@ var acl    = require(__dirname + '/lib/acl');           // set up the acl file
  */
 var RadarrMessage = require(__dirname + '/modules/RadarrMessage');
 
-console.log('flag1');
 
 /*
  * modules
@@ -48,21 +47,34 @@ bot.getMe().then(function(msg) {
         throw new Error(err);
     });
 
-console.log('TEST');
+
+/*
+Send at a specific user in a chat
+*/
+function sendAtUser(chatID, user, message){
+    
+    var mentionStr = '[' + user.first_name + ' ' + user.last_name + '](tg://user?id=' + (user.id) + ') \n';
+
+    return bot.sendMessage(chatID, (mentionStr) + message.join('\n'), { 'parse_mode': 'Markdown'});
+
+}
+
 
 function echoCmd(msg, match) {
-    console.log('echo');
 
-    var fromId = msg.from.id;
-    var resp = match;
-    bot.sendMessage(fromId, resp);
+    var fromId = msg.chat.id;
+    var resp = [];
+
+    resp.push(match);
+    
+    return sendAtUser(msg.chat.id, msg.from, resp);
 }
 
 /*
  * handle start command
  */
 function startCmd(msg) {
-    var fromId = msg.from.id;
+    var fromId = msg.chat.id;
 
     verifyUser(fromId);
 
@@ -74,7 +86,7 @@ function startCmd(msg) {
  * handle help command
  */
 function helpCmd(msg) {
-    var fromId = msg.from.id;
+    var fromId = msg.chat.id;
   
     verifyUser(fromId);
 
@@ -86,35 +98,34 @@ function helpCmd(msg) {
  * handle authorization
  */
 function authCmd(msg, match) {
-    console.log('TEST4');
-    var fromId = msg.from.id;
-    var chatId = msg.from.chatId;
+    var fromChat = msg.chat.id;
+    var fromUser = msg.from.id;
     var password = match;
 
     var message = [];
 
-    if (isAuthorized(fromId)) {
+    if (isAuthorized(fromUser)) {
         message.push(i18n.__('botChatAuthAlreadyAuthorized_1'));
         message.push(i18n.__('botChatAuthAlreadyAuthorized_2'));
-        return bot.sendMessage(fromId, message.join('\n'));
+        return bot.sendMessage(fromUser,  message.join('\n'));
     }
 
     // make sure the user is not banned
-    if (isRevoked(fromId)) {
+    if (isRevoked(fromUser)) {
         message.push(i18n.__('botChatAuthIsRevoked_1'));
         message.push(i18n.__('botChatAuthIsRevoked_2'));
-        return bot.sendMessage(fromId, message.join('\n'));
+        return bot.sendMessage(fromChat, message.join('\n'));
     }
 
     if (password !== config.bot.password) {
-        return replyWithError(fromId, new Error(i18n.__('errorInvalidPassowrd')));
+        return replyWithError(fromChat, new Error(i18n.__('errorInvalidPassowrd')));
     }
 
     acl.allowedUsers.push(msg.from);
     updateACL();
 
     if (acl.allowedUsers.length === 1) {
-        promptOwnerConfig(fromId);
+        promptOwnerConfig(fromChat);
     }
 
     if (config.bot.owner) {
@@ -124,7 +135,7 @@ function authCmd(msg, match) {
     message.push(i18n.__('botChatAuthGranted_1'));
     message.push(i18n.__('botChatAuthGranted_2'));
 
-    bot.sendMessage(fromId, message.join('\n'));
+    bot.sendMessage(fromChat, message.join('\n'));
 }
 
 /*
@@ -142,11 +153,7 @@ function usersCmd(msg){
         });
 
         return bot.sendMessage(fromId, response.join('\n'));
-    //return bot.sendMessage(fromId, response.join('\n'), {
-    //  'disable_web_page_preview': true,
-    //  'parse_mode': 'Markdown',
-    //  'selective': 2,
-    //});
+
     } 
 
 }
@@ -299,66 +306,59 @@ bot.on('message', function(msg) {
   Fixing escape-less nonsense
   */
 
-    console.log('TEST2' + msg.text);
     var user    = msg.from;
+    var chat    = msg.chat? msg.chat:null;
     var message = msg.text;
 
     if (/^\/auth\s?(.+)?$/g.test(message)) {
         var text = /^\/auth\s?(.+)?/g.exec(message) [1] || null;
-        console.log('authFlag');
         return (authCmd(msg, text));
 
     }
 
     if (/^\/echo\s?(.+)?$/g.test(message)) {
         var text = /^\/echo\s?(.+)?/g.exec(message) [1] || null;
-        console.log('echoFlag');
         return (echoCmd(msg, text));
     }
 
     if (/^\/clear\s?(.+)?$/g.test(message)) {
-        console.log('clearFlag');
         return (clearCmd(msg));
     }
 
     if (/^\/unrevoke\s?(.+)?$/g.test(message)) {
-        console.log('unrevokeFlag');
         return (unrevokeCmd(msg));
     }
 
     if (/^\/revoke\s?(.+)?$/g.test(message)) {
-        console.log('revokeFlag');
         return (revokeCmd(msg));
     }
 
     if (/^\/users\s?(.+)?$/g.test(message)) {
-        console.log('usersFlag');
         return (usersCmd(msg));
     }
 
     if (/^\/help\s?(.+)?$/g.test(message)) {
-        console.log('helpFlag');
         return (helpCmd(msg));
     }
 
     if (/^\/start\s?(.+)?$/g.test(message)) {
-        console.log('startFlag');
         return (startCmd(msg));
     }
 
-
-
-
-  
- 
-    var radarr = new RadarrMessage(bot, user, cache);
-    console.log('TEST3');
+    var radarr = new RadarrMessage(bot, user, chat, cache);
 
     if (/^\/library\s?(.+)?$/g.test(message)) {
-        console.log('libcheck');
         if(isAuthorized(user.id)){
             var searchText = /^\/library\s?(.+)?/g.exec(message)[1] || null;
             return radarr.performLibrarySearch(searchText);
+        } else {
+            return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
+        }
+    }
+
+    if(/^\/disk$/g.test(message)) {
+        if(isAuthorized(user.id)){
+            return radarr.getDiskUsage();
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
         }
@@ -452,31 +452,13 @@ bot.on('message', function(msg) {
         logger.info(i18n.__('botChatQueryMoviesChoose', user.id, message));
         return radarr.sendProfileList(message);
     }
-    /*
-    if (currentState === state.radarr.MONITOR) {
-        verifyUser(user.id);
-        logger.info(i18n.__('botChatQueryProfileChoose', user.id, message));
-        return radarr.sendMonitorList(message);
-    }
 
-    if (currentState === state.radarr.TYPE) {
-        verifyUser(user.id);
-        logger.info(i18n.__('botChatQueryTypeChoose', user.id, message));
-        return radarr.sendTypeList(message);
-    }
-    */
     if (currentState === state.radarr.FOLDER) {
         verifyUser(user.id);
         logger.info(i18n.__('botChatQueryFolderChoose', user.id, message));
         return radarr.sendFolderList(message);
     }
-    /*
-    if (currentState === state.radarr.SEASON_FOLDER) {
-        verifyUser(user.id);
-        logger.info(i18n.__('botChatQuerySeasonFolderChoose', user.id, message));
-        return radarr.sendSeasonFolderList(message);
-    }
-    */
+
     if (currentState === state.radarr.ADD_MOVIE) {
         verifyUser(user.id);
         return radarr.sendAddMovie(message);
