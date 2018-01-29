@@ -724,7 +724,7 @@ function getTelegramName(user) {
 /*
  * Send Commands To chat
  */
-function sendCommands(fromId) {
+function sendCommands(fromId, msg) {
     var response = ['Hello ' + getTelegramName(fromId) + '!'];
     response.push(i18n.__('botChatHelp_1'));
     response.push(i18n.__('botChatHelp_2'));
@@ -746,5 +746,5 @@ function sendCommands(fromId) {
     }
 
     //return bot.sendMessage(fromId, response.join('\n'), { 'parse_mode': 'Markdown', 'selective': 2 });
-    return bot.sendMessage(fromId, response.join('\n'));
+    return bot.sendMessage(msg.chat.id?msg.chat.id:fromId, response.join('\n'));
 }
