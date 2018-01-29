@@ -479,7 +479,7 @@ RadarrMessage.prototype.sendFolderList = function(profileName) {
         if (!result.length) {
             throw new Error(i18n.__('errorRadarrCouldntFindFolders'));
         }
-
+        console.log(result);
         var folders = result;
 
         logger.info(i18n.__('logRadarrFolderListRequested', self.username));
@@ -502,7 +502,7 @@ RadarrMessage.prototype.sendFolderList = function(profileName) {
         self.cache.set('movieProfileId' + self.user.id, profile.profileId);
         self.cache.set('movieFolderList' + self.user.id, folderList);
         self.cache.set('state' + self.user.id, state.radarr.ADD_MOVIE);
-       
+        console.log(keyboardList);
         return self._sendMessage(response.join('\n'), keyboardList);
     })
         .catch(function(error) {

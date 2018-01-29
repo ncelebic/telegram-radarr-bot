@@ -11,10 +11,10 @@ var bot = new TelegramBot(config.telegram.botToken, { polling: false });
 
 var groupId = config.bot.notifyId;
 
-var series_id = process.env.sonarr_series_id || i18n.__("botNotifySerieUnknowId");
-var series_title   = process.env.sonarr_series_title || i18n.__("botNotifySerieUnknowTitle");
-var series_path = process.env.sonarr_series_path || i18n.__("botNotifySerieUnknowPath");
-var series_tvdbid = process.env.sonarr_series_tvdbid || i18n.__("botNotifySerieUnknowTvdbId");
+var movie_id = process.env.sonarr_movie_id || i18n.__("botNotifyMovieUnknowId");
+var movie_title   = process.env.sonarr_movie_title || i18n.__("botNotifyMovieUnknowTitle");
+var movie_path = process.env.sonarr_movie_path || i18n.__("botNotifyMovieUnknowPath");
+var movie_tvdbid = process.env.sonarr_movie_tvdbid || i18n.__("botNotifyMovieUnknowTvdbId");
 var episodefile_id = process.env.sonarr_episodefile_id || i18n.__("botNotifyEpisodeUnknowFileId");
 var episodefile_relativepath = process.env.sonarr_episodefile_relativepath || i18n.__("botNotifyEpisodeUnknowRelativePath");
 var target  = process.env.sonarr_episodefile_path || i18n.__("botNotifyEpisodeUnknowPath");
@@ -40,14 +40,14 @@ catch (e) {
 }
 var message = [];
 message.push(i18n.__("botNotifyEpisodeImported"));
-message.push(i18n.__("botNotifyEpisodeFormat", series_title, season, episode));
+message.push(i18n.__("botNotifyEpisodeFormat", movie_title, season, episode));
 message.push(i18n.__("botNotifyAirDate", airdate));
 message.push(i18n.__("botNotifyQuality", quality));
 message.push(i18n.__("botNotifySize", fileSizeInMegaBytes));
 
-//message.push(i18n.__("botNotifySeriesID", series_id));
-//message.push(i18n.__("botNotifyPath", series_path));
-//message.push(i18n.__("botNotifyTvdbId", series_tvdbid));
+//message.push(i18n.__("botNotifyMovieID", movie_id));
+//message.push(i18n.__("botNotifyPath", movie_path));
+//message.push(i18n.__("botNotifyTvdbId", movie_tvdbid));
 //message.push(i18n.__("botNotifyEpisodeId", episodefile_id));
 //message.push(i18n.__("botNotifyRelPath", episodefile_relativepath));
 //message.push(i18n.__("botNotifyAirDateUtc", airdateutc));
