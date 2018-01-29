@@ -79,7 +79,7 @@ function startCmd(msg) {
     verifyUser(fromId);
 
     logger.info(i18n.__('logUserStartCommand'), fromId);
-    sendCommands(fromId);
+    sendCommands(fromId, msg);
 }
 
 /*
@@ -91,7 +91,7 @@ function helpCmd(msg) {
     verifyUser(fromId);
 
     logger.info(i18n.__('logUserHelpCommand', fromId));
-    sendCommands(fromId);
+    sendCommands(fromId, msg);
 }
 
 /*
