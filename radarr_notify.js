@@ -11,10 +11,17 @@ var bot = new TelegramBot(config.telegram.botToken, { polling: false });
 
 var groupId = config.bot.notifyId;
 
+fs.writeFile('/tmp/test', 'flag1', function(err) {
+    if(err){
+        return console.log(err);
+    }
+    console.log('file saved');
+});
+
 //var movie_id = process.env.radarr_movie_id || i18n.__('botNotifyMovieUnknowId');
 var movie_title   = process.env.radarr_movie_title || i18n.__('botNotifyMovieUnknowTitle');
 //var movie_path = process.env.radarr_movie_path || i18n.__('botNotifyMovieUnknowPath');
-var movie_imdbid = process.env.radarr_movie_imdbid || i18n.__('botNotifyMovieUnknowTmdbId');
+var movie_imdbid = process.env.radarr_movie_imdbid || i18n.__('botNotifyMovieUnknowimdbId');
 //var movie_relYear = process.env.radarr_movie_year;
 //var movie_id = process.env.radarr_movie_id || i18n.__("botNotifyEpisodeUnknowFileId");
 //var movie_relativepath = process.env.radarr_movie_relativepath || i18n.__("botNotifyEpisodeUnknowRelativePath");
