@@ -11,12 +11,7 @@ var bot = new TelegramBot(config.telegram.botToken, { polling: false });
 
 var groupId = config.bot.notifyId;
 
-fs.writeFile('/tmp/test', 'flag1', function(err) {
-    if(err){
-        return console.log(err);
-    }
-    console.log('file saved');
-});
+console.log('flag');
 
 //var movie_id = process.env.radarr_movie_id || i18n.__('botNotifyMovieUnknowId');
 var movie_title   = process.env.radarr_movie_title || i18n.__('botNotifyMovieUnknowTitle');
