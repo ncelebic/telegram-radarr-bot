@@ -96,7 +96,22 @@ Found 15 movies
 
 Use the custom keyboard to select the movie.
 
-![Step One](https://raw.githubusercontent.com/onedr0p/telegram-radarr-bot/master/examples/step_1.png)
+![Step One](https://raw.githubusercontent.com/eamondo2/telegram-radarr-bot/master/examples/step_1.png)
+
+The bot will then ask if this is the correct movie
+
+```
+Men in Black (1997)
+
+Men in Black follows the exploits of agents Kay and Jay, members of a top-secret organization established to monitor and police alien activity on Earth. The two Men in Black find themselves in the middle of the deadly plot by an intergalactic terrorist who has arrived on Earth to assassinate two ambassadors from opposing galaxies. In order to prevent worlds from colliding, the MiB must track down the terrorist and prevent the destruction of Earth. It's just another typical day for the Men in Black.
+
+Is this movie correct?
+➸ Yes
+➸ No
+
+```
+![Step Two](https://raw.githubusercontent.com/eamondo2/telegram-radarr-bot/master/examples/step_2.png)
+
 
 The bot will ask you for the quality
 
@@ -113,7 +128,7 @@ Found 6 profiles
 
 Send the profile using the custom keyboard
 
-![Step Two](https://raw.githubusercontent.com/onedr0p/telegram-radarr-bot/master/examples/step_2.png)
+![Step Three](https://raw.githubusercontent.com/eamondo2/telegram-radarr-bot/master/examples/step_3.png)
 
 The bot will ask you where the path you want the movie to go
 
@@ -124,11 +139,14 @@ Found 1 folders
 
 Send the folder using the custom keyboard
 
-![Step Two](https://raw.githubusercontent.com/onedr0p/telegram-radarr-bot/master/examples/step_3.png)
+![Step Four](https://raw.githubusercontent.com/eamondo2/telegram-radarr-bot/master/examples/step_4.png)
 
 
 
 If everything goes well, you'll see a text from the bot saying the movie was added.
+
+![Step Five](https://raw.githubusercontent.com/eamondo2/telegram-radarr-bot/master/examples/step_5.png)
+
 
 ### Notifications - Not ported yet
 Radarr can be setup to send notifications to a user or a group chat when new content is added.  
