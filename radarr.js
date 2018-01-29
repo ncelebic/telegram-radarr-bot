@@ -74,7 +74,7 @@ function echoCmd(msg, match) {
  * handle start command
  */
 function startCmd(msg) {
-    var fromId = msg.chat.id;
+    var fromId = msg.from.id;
 
     verifyUser(fromId);
 
@@ -86,7 +86,7 @@ function startCmd(msg) {
  * handle help command
  */
 function helpCmd(msg) {
-    var fromId = msg.chat.id;
+    var fromId = msg.from.id;
   
     verifyUser(fromId);
 
