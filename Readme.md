@@ -149,6 +149,7 @@ If everything goes well, you'll see a text from the bot saying the movie was add
 
 
 ### Notifications - Not ported yet
+### As Radarr has built in telegram notification settings, I don't feel it is necessary to fix this. It currently does not work
 Radarr can be setup to send notifications to a user or a group chat when new content is added.  
 
 * In Radarr go to `Settings` > `Connect` > `+` > `Custom Script`
