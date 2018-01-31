@@ -38,15 +38,21 @@ var bot = new TelegramBot(config.telegram.botToken, { polling: true });
 var cache = new NodeCache({ stdTTL: 120, checkperiod: 150 });
 
 /*
+ * Save bots name, for parsing in group @ commands
+ */
+
+var botName = '';
+
+/*
  * get the bot name
  */
 bot.getMe().then(function(msg) {
     logger.info(i18n.__('logBotInitialisation'), msg.username);
+    botName = msg.first_name;
 })
     .catch(function(err) {
         throw new Error(err);
     });
-
 
 /*
 Send at a specific user in a chat
@@ -302,6 +308,18 @@ function clearCmd(msg) {
  */
 bot.on('message', function(msg) {
 
+    if ( /^\/(.+)\s?(@)(\S+)(.+)?$/g.test(msg.text)){
+        var nameMatch = /^\/(.+)\s?(@)(\S+)(.+)?/g.exec(msg.text)[3] || null;
+        if ( nameMatch != botName ){
+            console.log('CAUGHT');
+            console.log(botName);
+            console.log(nameMatch);
+            console.log(botName == nameMatch);
+            return null;
+        }
+    } else {
+        return null;
+    }
     /*
   Fixing escape-less nonsense
   */
@@ -310,85 +328,78 @@ bot.on('message', function(msg) {
     var chat    = msg.chat? msg.chat:null;
     var message = msg.text;
 
-    if (/^\/auth\s?(.+)?$/g.test(message)) {
-        var text = /^\/auth\s?(.+)?/g.exec(message) [1] || null;
+    if (/^\/auth\s?(@)(\S+) (.+)?$/g.test(message)) {
+        var text = /^\/auth\s?(@)(\S+) (.+)?/g.exec(message) [3] || null;
         return (authCmd(msg, text));
 
     }
 
-    if (/^\/echo\s?(.+)?$/g.test(message)) {
-        var text = /^\/echo\s?(.+)?/g.exec(message) [1] || null;
+    if (/^\/echo\s?(@)(\S+)(.+)?$/g.test(message)) {
+        var text = /^\/echo\s?(@)(\S+) (.+)?/g.exec(message) [3] || null;
         return (echoCmd(msg, text));
     }
 
-    if (/^\/clear\s?(.+)?$/g.test(message)) {
+    if (/^\/clear\s?(@)(\S+)?$/g.test(message)) {
         return (clearCmd(msg));
     }
 
-    if (/^\/unrevoke\s?(.+)?$/g.test(message)) {
+    if (/^\/unrevoke\s?(@)(\S+)?$/g.test(message)) {
         return (unrevokeCmd(msg));
     }
 
-    if (/^\/revoke\s?(.+)?$/g.test(message)) {
+    if (/^\/revoke\s?(@)(\S+)?$/g.test(message)) {
         return (revokeCmd(msg));
     }
 
-    if (/^\/users\s?(.+)?$/g.test(message)) {
+    if (/^\/users\s?(@)(\S+)?$/g.test(message)) {
         return (usersCmd(msg));
     }
 
-    if (/^\/help\s?(.+)?$/g.test(message)) {
+    if (/^\/help\s?(@)(\S+)?$/g.test(message)) {
         return (helpCmd(msg));
     }
 
-    if (/^\/start\s?(.+)?$/g.test(message)) {
+    if (/^\/start\s?(@)(\S+)?$/g.test(message)) {
         return (startCmd(msg));
     }
 
-    var radarr = new RadarrMessage(bot, user, chat, cache);
+ 
+    var sonarr = new SonarrMessage(bot, user, chat, cache);
 
-    if (/^\/library\s?(.+)?$/g.test(message)) {
+    if (/^\/library\s?(@)(\S+)(.+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
-            var searchText = /^\/library\s?(.+)?/g.exec(message)[1] || null;
-            return radarr.performLibrarySearch(searchText);
+            var searchText = /^\/library\s?(@)(\S+)(.+)?/g.exec(message)[3] || null;
+            return sonarr.performLibrarySearch(searchText);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
         }
     }
 
-    if(/^\/disk$/g.test(message)) {
-        if(isAuthorized(user.id)){
-            return radarr.getDiskUsage();
-        } else {
-            return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
-        }
-    }
-
-    if(/^\/rss$/g.test(message)) {
+    if(/^\/rss\s?(@)(\S+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
-            return radarr.performRssSync();
+            return sonarr.performRssSync();
         }  
     }
 
-    if(/^\/wanted$/g.test(message)) {
+    if(/^\/wanted\s?(@)(\S+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
-            return radarr.performWantedSearch();
+            return sonarr.performWantedSearch();
         }
     }
 
-    if(/^\/refresh$/g.test(message)) {
+    if(/^\/refresh\s?(@)(\S+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
-            return radarr.performLibraryRefresh();
+            return sonarr.performLibraryRefresh();
         }
     }
 
-    if (/^\/upcoming\s?(\d+)?$/g.test(message)) {
+    if (/^\/upcoming\s?(@)(\S+)(\d+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
-            var futureDays = /^\/upcoming\s?(\d+)?/g.exec(message)[1] || 3;
-            return radarr.performCalendarSearch(futureDays);
+            var futureDays = /^\/(.+)\s?(@)(\S+)(\d+)?/g.exec(message)[3] || 3;
+            return sonarr.performCalendarSearch(futureDays);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
         }
@@ -399,7 +410,7 @@ bot.on('message', function(msg) {
    * Gets the current chat id
    * Used for configuring notifications and similar tasks
    */
-    if (/^\/cid$/g.test(message)) {
+    if (/^\/cid\s?(@)(\S+)?$/g.test(message)) {
         verifyAdmin(user.id);
         logger.info(i18n.__('logUserCidCommand', user.id, msg.chat.id));
         return bot.sendMessage(msg.chat.id, i18n.__('botChatCid', msg.chat.id));
@@ -409,10 +420,10 @@ bot.on('message', function(msg) {
     /*
    * /query command
    */
-    if (/^\/[Qq](uery)? (.+)$/g.test(message)) {
+    if (/^\/([Qq](uery)?)?(@)(\S+)(.+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
-            var seriesName = /^\/[Qq](uery)? (.+)/g.exec(message)[2] || null;
-            return radarr.sendMoviesList(seriesName);
+            var seriesName = /^\/([Qq](uery)?)?(@)(\S+)(.+)?/g.exec(message)[5] || null;
+            return sonarr.sendSeriesList(seriesName);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));     
         }
