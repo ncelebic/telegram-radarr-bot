@@ -334,13 +334,13 @@ bot.on('message', function(msg) {
     var message = msg.text;
 
     if (/^\/auth\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
-        var text = /^\/auth\s?(@)(\S+)\s?(.+)?/g.exec(message) [3] || null;
+        var text = /^\/auth\s?(@)(\S+)\s?(.+)?$/g.exec(message) [3] || null;
         return (authCmd(msg, text));
 
     }
 
     if (/^\/echo\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
-        var text = /^\/echo\s?(@)(\S+)\s?(.+)?/g.exec(message) [3] || null;
+        var text = /^\/echo\s?(@)(\S+)\s?(.+)?$/g.exec(message) [3] || null;
         return (echoCmd(msg, text));
     }
 
@@ -371,9 +371,10 @@ bot.on('message', function(msg) {
  
     var sonarr = new SonarrMessage(bot, user, chat, cache);
 
-    if (/^\/library\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
+    if (/^\/[Ll]ibrary\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
+        console.log("PASS2");
         if(isAuthorized(user.id)){
-            var searchText = /^\/library\s?(@)(\S+)\s?(.+)?/g.exec(message)[3] || null;
+            var searchText = /^\/[Ll]ibrary\s?(@)(\S+)\s?(.+)?$/g.exec(message)[3] || null;
             return sonarr.performLibrarySearch(searchText);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
