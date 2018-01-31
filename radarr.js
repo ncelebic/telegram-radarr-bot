@@ -308,6 +308,7 @@ function clearCmd(msg) {
  */
 bot.on('message', function(msg) {
 
+    
     if ( /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.test(msg.text)){
         var nameMatch = /^\/(.+)(@)(\S+)\s?(.+)?/g.exec(msg.text)[3] || null;
         if ( nameMatch != botName ){
