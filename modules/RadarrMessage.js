@@ -544,7 +544,6 @@ RadarrMessage.prototype.sendFolderList = function(profileName) {
         logger.info(i18n.__('logRadarrFoundFolders', self.username, keyboardList.join(',')));
 
         // set cache
-        //self.cache.set('movieTypeId' + self.user.id, type.type);
         self.cache.set('movieProfileId' + self.user.id, profile.profileId);
         self.cache.set('movieFolderList' + self.user.id, folderList);
         self.cache.set('state' + self.user.id, state.radarr.ADD_MOVIE);
@@ -632,7 +631,7 @@ RadarrMessage.prototype.sendAddMovie = function(folderName) {
     //var typeId           = self.cache.get('movieTypeId' + self.user.id);
     //var typeList         = self.cache.get('movieTypeList' + self.user.id);
     var folderId         = self.cache.get('movieFolderId' + self.user.id);
-    var folderList       = self.cache.get('movieFolderList' + self.user.id);
+    //var folderList       = self.cache.get('movieFolderList' + self.user.id);
     //var seasonFolderId   = seasonFolderName;
     //var seasonFolderList = self.cache.get('movieSeasonFolderList' + self.user.id);
     console.log("ADDMOVIE1");
@@ -644,7 +643,7 @@ RadarrMessage.prototype.sendAddMovie = function(folderName) {
     var profile      = _.filter(profileList, function(item) { return item.profileId === profileId; })[0];
     //var monitor      = _.filter(monitorList, function(item) { return item.type === monitorId; })[0];
     //var type         = _.filter(typeList, function(item) { return item.type === typeId; })[0];
-    var folder       = _.filter(folderList, function(item) { return item.folderId === folderId; })[0];
+    //var folder       = _.filter(folderList, function(item) { return item.folderId === folderId; })[0];
     //var seasonFolder = _.filter(seasonFolderList, function(item) { return item.type === seasonFolderId; })[0];
     console.log("FLAG");
     console.log((movie != null? 'true' : 'false' )+ ' | ' + (folder != null? 'true' : 'false') + ' | ' + (profile != null? 'true' : 'false'));
@@ -792,10 +791,8 @@ RadarrMessage.prototype._clearCache = function() {
 
     var cacheItems = [
         'movieId', 'movieList', 'movieProfileId',
-        'movieProfileList', 'movieFolderId', 'movieFolderList',
-        'movieMonitorId', 'movieMonitorList', 'movieFolderId',
-        'movieFolderList', 'movieTypeId', 'movieTypeList',
-        'movieSeasonFolderList', 'state'
+        'movieProfileList', 'movieFolderId', 'movieFolderList', 'movieFolderId',
+        'movieFolderList', 'state'
     ];
 
     return _(cacheItems).forEach(function(item) {
