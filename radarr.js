@@ -310,7 +310,7 @@ bot.on('message', function(msg) {
 
     
     if ( /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.test(msg.text)){
-        var nameMatch = /^\/(.+)(@)(\S+)\s?(.+)?/g.exec(msg.text)[3] || null;
+        var nameMatch = /^\/(.+)(@)(\S+)\s?(.+)?&/g.exec(msg.text)[3] || null;
         if ( nameMatch != botName ){
             console.log('REJECT');
             console.log(botName);
@@ -319,6 +319,8 @@ bot.on('message', function(msg) {
             return null;
         }
     } else {
+        console.log("REJECT2");
+        console.log(msg);
         return null;
     }
     /*
@@ -340,27 +342,27 @@ bot.on('message', function(msg) {
         return (echoCmd(msg, text));
     }
 
-    if (/^\/clear\s?(@)(\S+)$/g.test(message)) {
+    if (/^\/clear\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         return (clearCmd(msg));
     }
 
-    if (/^\/unrevoke\s?(@)(\S+)$/g.test(message)) {
+    if (/^\/unrevoke\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         return (unrevokeCmd(msg));
     }
 
-    if (/^\/revoke\s?(@)(\S+)$/g.test(message)) {
+    if (/^\/revoke\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         return (revokeCmd(msg));
     }
 
-    if (/^\/users\s?(@)(\S+)$/g.test(message)) {
+    if (/^\/users\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         return (usersCmd(msg));
     }
 
-    if (/^\/help\s?(@)(\S+)$/g.test(message)) {
+    if (/^\/help\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         return (helpCmd(msg));
     }
 
-    if (/^\/start\s?(@)(\S+)$/g.test(message)) {
+    if (/^\/start\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         return (startCmd(msg));
     }
 
@@ -376,21 +378,21 @@ bot.on('message', function(msg) {
         }
     }
 
-    if(/^\/rss\s?(@)(\S+)$/g.test(message)) {
+    if(/^\/rss\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
             return sonarr.performRssSync();
         }  
     }
 
-    if(/^\/wanted\s?(@)(\S+)$/g.test(message)) {
+    if(/^\/wanted\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
             return sonarr.performWantedSearch();
         }
     }
 
-    if(/^\/refresh\s?(@)(\S+)$/g.test(message)) {
+    if(/^\/refresh\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
             return sonarr.performLibraryRefresh();
@@ -399,7 +401,7 @@ bot.on('message', function(msg) {
 
     if (/^\/upcoming\s?(@)(\S+)\s?(\d+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
-            var futureDays = /^\/upcoming\s?(@)(\S+)\s?(\d+)?/g.exec(message)[3] || 3;
+            var futureDays = /^\/upcoming\s?(@)(\S+)\s?(\d+)?$/g.exec(message)[3] || 3;
             return sonarr.performCalendarSearch(futureDays);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
