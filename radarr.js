@@ -21,7 +21,6 @@ var acl    = require(__dirname + '/lib/acl');           // set up the acl file
  */
 var RadarrMessage = require(__dirname + '/modules/RadarrMessage');
 
-console.log('flag1');
 
 /*
  * modules
@@ -39,23 +38,42 @@ var bot = new TelegramBot(config.telegram.botToken, { polling: true });
 var cache = new NodeCache({ stdTTL: 120, checkperiod: 150 });
 
 /*
+ * Save bots name, for parsing in group @ commands
+ */
+
+var botName = '';
+
+/*
  * get the bot name
  */
 bot.getMe().then(function(msg) {
     logger.info(i18n.__('logBotInitialisation'), msg.username);
+    botName = msg.first_name;
 })
     .catch(function(err) {
         throw new Error(err);
     });
 
-console.log('TEST');
+/*
+Send at a specific user in a chat
+*/
+function sendAtUser(chatID, user, message){
+    
+    var mentionStr = '[' + user.first_name + ' ' + user.last_name + '](tg://user?id=' + (user.id) + ') \n';
+
+    return bot.sendMessage(chatID, (mentionStr) + message.join('\n'), { 'parse_mode': 'Markdown'});
+
+}
+
 
 function echoCmd(msg, match) {
-    console.log('echo');
 
-    var fromId = msg.from.id;
-    var resp = match;
-    bot.sendMessage(fromId, resp);
+    var fromId = msg.chat.id;
+    var resp = [];
+
+    resp.push(match);
+    
+    return sendAtUser(msg.chat.id, msg.from, resp);
 }
 
 /*
@@ -67,7 +85,7 @@ function startCmd(msg) {
     verifyUser(fromId);
 
     logger.info(i18n.__('logUserStartCommand'), fromId);
-    sendCommands(fromId);
+    sendCommands(fromId, msg);
 }
 
 /*
@@ -79,42 +97,41 @@ function helpCmd(msg) {
     verifyUser(fromId);
 
     logger.info(i18n.__('logUserHelpCommand', fromId));
-    sendCommands(fromId);
+    sendCommands(fromId, msg);
 }
 
 /*
  * handle authorization
  */
 function authCmd(msg, match) {
-    console.log('TEST4');
-    var fromId = msg.from.id;
-    var chatId = msg.from.chatId;
+    var fromChat = msg.chat.id;
+    var fromUser = msg.from.id;
     var password = match;
 
     var message = [];
 
-    if (isAuthorized(fromId)) {
+    if (isAuthorized(fromUser)) {
         message.push(i18n.__('botChatAuthAlreadyAuthorized_1'));
         message.push(i18n.__('botChatAuthAlreadyAuthorized_2'));
-        return bot.sendMessage(fromId, message.join('\n'));
+        return bot.sendMessage(fromUser,  message.join('\n'));
     }
 
     // make sure the user is not banned
-    if (isRevoked(fromId)) {
+    if (isRevoked(fromUser)) {
         message.push(i18n.__('botChatAuthIsRevoked_1'));
         message.push(i18n.__('botChatAuthIsRevoked_2'));
-        return bot.sendMessage(fromId, message.join('\n'));
+        return bot.sendMessage(fromChat, message.join('\n'));
     }
 
     if (password !== config.bot.password) {
-        return replyWithError(fromId, new Error(i18n.__('errorInvalidPassowrd')));
+        return replyWithError(fromChat, new Error(i18n.__('errorInvalidPassowrd')));
     }
 
     acl.allowedUsers.push(msg.from);
     updateACL();
 
     if (acl.allowedUsers.length === 1) {
-        promptOwnerConfig(fromId);
+        promptOwnerConfig(fromChat);
     }
 
     if (config.bot.owner) {
@@ -124,7 +141,7 @@ function authCmd(msg, match) {
     message.push(i18n.__('botChatAuthGranted_1'));
     message.push(i18n.__('botChatAuthGranted_2'));
 
-    bot.sendMessage(fromId, message.join('\n'));
+    bot.sendMessage(fromChat, message.join('\n'));
 }
 
 /*
@@ -142,11 +159,7 @@ function usersCmd(msg){
         });
 
         return bot.sendMessage(fromId, response.join('\n'));
-    //return bot.sendMessage(fromId, response.join('\n'), {
-    //  'disable_web_page_preview': true,
-    //  'parse_mode': 'Markdown',
-    //  'selective': 2,
-    //});
+
     } 
 
 }
@@ -295,100 +308,98 @@ function clearCmd(msg) {
  */
 bot.on('message', function(msg) {
 
+    if ( /^\/(.+)\s?(@)(\S+)(.+)?$/g.test(msg.text)){
+        var nameMatch = /^\/(.+)\s?(@)(\S+)(.+)?/g.exec(msg.text)[3] || null;
+        if ( nameMatch != botName ){
+            console.log('CAUGHT');
+            console.log(botName);
+            console.log(nameMatch);
+            console.log(botName == nameMatch);
+            return null;
+        }
+    } else {
+        return null;
+    }
     /*
   Fixing escape-less nonsense
   */
 
-    console.log('TEST2' + msg.text);
     var user    = msg.from;
+    var chat    = msg.chat? msg.chat:null;
     var message = msg.text;
 
-    if (/^\/auth\s?(.+)?$/g.test(message)) {
-        var text = /^\/auth\s?(.+)?/g.exec(message) [1] || null;
-        console.log('authFlag');
+    if (/^\/auth\s?(@)(\S+) (.+)?$/g.test(message)) {
+        var text = /^\/auth\s?(@)(\S+) (.+)?/g.exec(message) [3] || null;
         return (authCmd(msg, text));
 
     }
 
-    if (/^\/echo\s?(.+)?$/g.test(message)) {
-        var text = /^\/echo\s?(.+)?/g.exec(message) [1] || null;
-        console.log('echoFlag');
+    if (/^\/echo\s?(@)(\S+)(.+)?$/g.test(message)) {
+        var text = /^\/echo\s?(@)(\S+) (.+)?/g.exec(message) [3] || null;
         return (echoCmd(msg, text));
     }
 
-    if (/^\/clear\s?(.+)?$/g.test(message)) {
-        console.log('clearFlag');
+    if (/^\/clear\s?(@)(\S+)?$/g.test(message)) {
         return (clearCmd(msg));
     }
 
-    if (/^\/unrevoke\s?(.+)?$/g.test(message)) {
-        console.log('unrevokeFlag');
+    if (/^\/unrevoke\s?(@)(\S+)?$/g.test(message)) {
         return (unrevokeCmd(msg));
     }
 
-    if (/^\/revoke\s?(.+)?$/g.test(message)) {
-        console.log('revokeFlag');
+    if (/^\/revoke\s?(@)(\S+)?$/g.test(message)) {
         return (revokeCmd(msg));
     }
 
-    if (/^\/users\s?(.+)?$/g.test(message)) {
-        console.log('usersFlag');
+    if (/^\/users\s?(@)(\S+)?$/g.test(message)) {
         return (usersCmd(msg));
     }
 
-    if (/^\/help\s?(.+)?$/g.test(message)) {
-        console.log('helpFlag');
+    if (/^\/help\s?(@)(\S+)?$/g.test(message)) {
         return (helpCmd(msg));
     }
 
-    if (/^\/start\s?(.+)?$/g.test(message)) {
-        console.log('startFlag');
+    if (/^\/start\s?(@)(\S+)?$/g.test(message)) {
         return (startCmd(msg));
     }
 
-
-
-
-  
  
-    var radarr = new RadarrMessage(bot, user, cache);
-    console.log('TEST3');
+    var sonarr = new SonarrMessage(bot, user, chat, cache);
 
-    if (/^\/library\s?(.+)?$/g.test(message)) {
-        console.log('libcheck');
+    if (/^\/library\s?(@)(\S+)(.+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
-            var searchText = /^\/library\s?(.+)?/g.exec(message)[1] || null;
-            return radarr.performLibrarySearch(searchText);
+            var searchText = /^\/library\s?(@)(\S+)(.+)?/g.exec(message)[3] || null;
+            return sonarr.performLibrarySearch(searchText);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
         }
     }
 
-    if(/^\/rss$/g.test(message)) {
+    if(/^\/rss\s?(@)(\S+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
-            return radarr.performRssSync();
+            return sonarr.performRssSync();
         }  
     }
 
-    if(/^\/wanted$/g.test(message)) {
+    if(/^\/wanted\s?(@)(\S+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
-            return radarr.performWantedSearch();
+            return sonarr.performWantedSearch();
         }
     }
 
-    if(/^\/refresh$/g.test(message)) {
+    if(/^\/refresh\s?(@)(\S+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
-            return radarr.performLibraryRefresh();
+            return sonarr.performLibraryRefresh();
         }
     }
 
-    if (/^\/upcoming\s?(\d+)?$/g.test(message)) {
+    if (/^\/upcoming\s?(@)(\S+)(\d+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
-            var futureDays = /^\/upcoming\s?(\d+)?/g.exec(message)[1] || 3;
-            return radarr.performCalendarSearch(futureDays);
+            var futureDays = /^\/(.+)\s?(@)(\S+)(\d+)?/g.exec(message)[3] || 3;
+            return sonarr.performCalendarSearch(futureDays);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
         }
@@ -399,7 +410,7 @@ bot.on('message', function(msg) {
    * Gets the current chat id
    * Used for configuring notifications and similar tasks
    */
-    if (/^\/cid$/g.test(message)) {
+    if (/^\/cid\s?(@)(\S+)?$/g.test(message)) {
         verifyAdmin(user.id);
         logger.info(i18n.__('logUserCidCommand', user.id, msg.chat.id));
         return bot.sendMessage(msg.chat.id, i18n.__('botChatCid', msg.chat.id));
@@ -409,10 +420,10 @@ bot.on('message', function(msg) {
     /*
    * /query command
    */
-    if (/^\/[Qq](uery)? (.+)$/g.test(message)) {
+    if (/^\/([Qq](uery)?)?(@)(\S+)(.+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
-            var seriesName = /^\/[Qq](uery)? (.+)/g.exec(message)[2] || null;
-            return radarr.sendMoviesList(seriesName);
+            var seriesName = /^\/([Qq](uery)?)?(@)(\S+)(.+)?/g.exec(message)[5] || null;
+            return sonarr.sendSeriesList(seriesName);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));     
         }
@@ -452,31 +463,13 @@ bot.on('message', function(msg) {
         logger.info(i18n.__('botChatQueryMoviesChoose', user.id, message));
         return radarr.sendProfileList(message);
     }
-    /*
-    if (currentState === state.radarr.MONITOR) {
-        verifyUser(user.id);
-        logger.info(i18n.__('botChatQueryProfileChoose', user.id, message));
-        return radarr.sendMonitorList(message);
-    }
 
-    if (currentState === state.radarr.TYPE) {
-        verifyUser(user.id);
-        logger.info(i18n.__('botChatQueryTypeChoose', user.id, message));
-        return radarr.sendTypeList(message);
-    }
-    */
     if (currentState === state.radarr.FOLDER) {
         verifyUser(user.id);
         logger.info(i18n.__('botChatQueryFolderChoose', user.id, message));
         return radarr.sendFolderList(message);
     }
-    /*
-    if (currentState === state.radarr.SEASON_FOLDER) {
-        verifyUser(user.id);
-        logger.info(i18n.__('botChatQuerySeasonFolderChoose', user.id, message));
-        return radarr.sendSeasonFolderList(message);
-    }
-    */
+
     if (currentState === state.radarr.ADD_MOVIE) {
         verifyUser(user.id);
         return radarr.sendAddMovie(message);
@@ -742,7 +735,7 @@ function getTelegramName(user) {
 /*
  * Send Commands To chat
  */
-function sendCommands(fromId) {
+function sendCommands(fromId, msg) {
     var response = ['Hello ' + getTelegramName(fromId) + '!'];
     response.push(i18n.__('botChatHelp_1'));
     response.push(i18n.__('botChatHelp_2'));
@@ -764,5 +757,5 @@ function sendCommands(fromId) {
     }
 
     //return bot.sendMessage(fromId, response.join('\n'), { 'parse_mode': 'Markdown', 'selective': 2 });
-    return bot.sendMessage(fromId, response.join('\n'));
+    return bot.sendMessage(msg.chat.id?msg.chat.id:fromId, response.join('\n'));
 }
