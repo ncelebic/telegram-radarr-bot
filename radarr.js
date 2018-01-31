@@ -310,7 +310,7 @@ bot.on('message', function(msg) {
 
     console.log(msg);
     if ( /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.test(msg.text)){
-        var nameMatch = /^\/(\S+)\s?(@)(\S+)\s?(.+)?&/g.exec(msg.text)[3] || null;
+        var nameMatch = /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.exec(msg.text)[3] || null;
         if ( nameMatch != botName ){
             console.log('REJECT');
             console.log(botName);
