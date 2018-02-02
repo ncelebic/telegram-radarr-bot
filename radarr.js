@@ -318,26 +318,17 @@ bot.on('message', function(msg) {
     var chat    = msg.chat? msg.chat:null;
     var message = msg.text;
 
-    console.log(msg);
-    console.log(cache.get('state' + user.id));
-
+   
     if ( /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.test(msg.text)){
         var nameMatch = /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.exec(msg.text)[3] || null;
         if ( nameMatch != botName && nameMatch != botUName ){
-            console.log('REJECT');
-            console.log(botName);
-            console.log(nameMatch);
-            console.log(botName == nameMatch);
+            
             return null;
-        } else {
-            console.log("PASS");
         }
     } else if  (!cache.get('state' + user.id)) {
-        console.log("FAIL2");
+        
         return null;
-    } else {
-        console.log("PASS2")
-    }
+    } 
     /*
   Fixing escape-less nonsense
   */
@@ -457,7 +448,6 @@ bot.on('message', function(msg) {
     // get the current cache state
     var currentState = cache.get('state' + user.id);
 
-    console.log(currentState);
 
     if (currentState === state.admin.REVOKE) {
         verifyUser(user.id);
@@ -478,28 +468,24 @@ bot.on('message', function(msg) {
         verifyUser(user.id);
         return handleUnRevokeUserConfirm(user.id, message);
     }
-    console.log(currentState);
 
     if (currentState === state.radarr.CONFIRM) {
         verifyUser(user.id);
         logger.info(i18n.__('botChatQueryMoviesConfirm', user.id, message));
         return radarr.confirmMovieSelect(message);
     }
-    console.log(currentState);
 
     if (currentState === state.radarr.PROFILE) {
         verifyUser(user.id);
         logger.info(i18n.__('botChatQueryMoviesChoose', user.id, message));
         return radarr.sendProfileList(message);
     }
-    console.log(currentState);
 
     if (currentState === state.radarr.FOLDER) {
         verifyUser(user.id);
         logger.info(i18n.__('botChatQueryFolderChoose', user.id, message));
         return radarr.sendFolderList(message);
     }
-    console.log(currentState);
     if (currentState === state.radarr.ADD_MOVIE) {
         verifyUser(user.id);
         return radarr.sendAddMovie(message);
