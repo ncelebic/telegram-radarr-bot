@@ -41,6 +41,7 @@ var cache = new NodeCache({ stdTTL: 120, checkperiod: 150 });
  */
 
 var botName = '';
+var botUName = '';
 
 /*
  * get the bot name
@@ -48,6 +49,7 @@ var botName = '';
 bot.getMe().then(function(msg) {
     logger.info(i18n.__('logBotInitialisation'), msg.username);
     botName = msg.first_name;
+    botUName = msg.username;
 })
     .catch(function(err) {
         throw new Error(err);
@@ -317,10 +319,11 @@ bot.on('message', function(msg) {
     var message = msg.text;
 
     console.log(msg);
+    console.log(cache.get('state' + user.id));
 
     if ( /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.test(msg.text)){
         var nameMatch = /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.exec(msg.text)[3] || null;
-        if ( nameMatch != botName ){
+        if ( nameMatch != botName && nameMatch != botUName ){
             console.log('REJECT');
             console.log(botName);
             console.log(nameMatch);
@@ -378,7 +381,7 @@ bot.on('message', function(msg) {
     }
 
 
-    radarr = new RadarrMessage(bot, user, chat, cache);
+    var radarr = new RadarrMessage(bot, user, chat, cache);
     
     if (/^\/library\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
