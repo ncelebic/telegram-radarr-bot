@@ -6,7 +6,6 @@ var fs          = require('fs');                        // https://nodejs.org/ap
 var _           = require('lodash');                    // https://www.npmjs.com/package/lodash
 var NodeCache   = require('node-cache');                // https://www.npmjs.com/package/node-cache
 var TelegramBot = require('node-telegram-bot-api');     // https://www.npmjs.com/package/node-telegram-bot-api
-
 /*
  * libs
  */
@@ -304,11 +303,21 @@ function clearCmd(msg) {
 }
 
 /*
- * handle sonarr commands
+ * handle radarr commands
  */
 bot.on('message', function(msg) {
+    /** 
+     * 
+     * Always first step function
+     * 
+    */
+
+    var user    = msg.from;
+    var chat    = msg.chat? msg.chat:null;
+    var message = msg.text;
 
     console.log(msg);
+
     if ( /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.test(msg.text)){
         var nameMatch = /^\/(\S+)\s?(@)(\S+)\s?(.+)?$/g.exec(msg.text)[3] || null;
         if ( nameMatch != botName ){
@@ -320,18 +329,18 @@ bot.on('message', function(msg) {
         } else {
             console.log("PASS");
         }
-    } else {
-        console.log("REJECT2");
-        console.log(msg);
+    } else if  (!cache.get('state' + user.id)) {
+        console.log("FAIL2");
         return null;
+    } else {
+        console.log("PASS2")
     }
     /*
   Fixing escape-less nonsense
   */
 
-    var user    = msg.from;
-    var chat    = msg.chat? msg.chat:null;
-    var message = msg.text;
+   
+
 
     if (/^\/auth\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         var text = /^\/auth\s?(@)(\S+)\s?(.+)?$/g.exec(message) [3] || null;
@@ -368,14 +377,13 @@ bot.on('message', function(msg) {
         return (startCmd(msg));
     }
 
- 
-    var sonarr = new SonarrMessage(bot, user, chat, cache);
 
-    if (/^\/[Ll]ibrary\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
-        console.log("PASS2");
+    radarr = new RadarrMessage(bot, user, chat, cache);
+    
+    if (/^\/library\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
-            var searchText = /^\/[Ll]ibrary\s?(@)(\S+)\s?(.+)?$/g.exec(message)[3] || null;
-            return sonarr.performLibrarySearch(searchText);
+            var searchText = /^\/library\s?(@)(\S+)\s?(.+)?$/g.exec(message)[3] || null;
+            return radarr.performLibrarySearch(searchText);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
         }
@@ -384,28 +392,28 @@ bot.on('message', function(msg) {
     if(/^\/rss\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
-            return sonarr.performRssSync();
+            return radarr.performRssSync();
         }  
     }
 
     if(/^\/wanted\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
-            return sonarr.performWantedSearch();
+            return radarr.performWantedSearch();
         }
     }
 
     if(/^\/refresh\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         verifyAdmin(user.id);
         if(isAdmin(user.id)){
-            return sonarr.performLibraryRefresh();
+            return radarr.performLibraryRefresh();
         }
     }
 
     if (/^\/upcoming\s?(@)(\S+)\s?(\d+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
             var futureDays = /^\/upcoming\s?(@)(\S+)\s?(\d+)?$/g.exec(message)[3] || 3;
-            return sonarr.performCalendarSearch(futureDays);
+            return radarr.performCalendarSearch(futureDays);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));
         }
@@ -426,10 +434,10 @@ bot.on('message', function(msg) {
     /*
    * /query command
    */
-    if (/^\/[Qq](uery)?\s?(@)(\S+)\s?(.+)$/g.test(message)) {
+    if (/^\/([Qq](uery)?)\s?(@)(\S+)\s?(.+)?$/g.test(message)) {
         if(isAuthorized(user.id)){
-            var seriesName = /^\/[Qq](uery)?\s?(@)(\S+)\s?(.+)/g.exec(message)[5] || null;
-            return sonarr.sendSeriesList(seriesName);
+            var movieName = /^\/[Qq](uery)?\s?(@)(\S+)\s?(.+)?$/g.exec(message)[4] || null;
+            return radarr.sendMoviesList(movieName);
         } else {
             return replyWithError(user.id, new Error(i18n.__('notAuthorized')));     
         }
@@ -437,6 +445,8 @@ bot.on('message', function(msg) {
 
     // get the current cache state
     var currentState = cache.get('state' + user.id);
+
+    console.log(currentState);
 
     if (currentState === state.admin.REVOKE) {
         verifyUser(user.id);
@@ -457,25 +467,28 @@ bot.on('message', function(msg) {
         verifyUser(user.id);
         return handleUnRevokeUserConfirm(user.id, message);
     }
+    console.log(currentState);
 
     if (currentState === state.radarr.CONFIRM) {
         verifyUser(user.id);
         logger.info(i18n.__('botChatQueryMoviesConfirm', user.id, message));
         return radarr.confirmMovieSelect(message);
     }
+    console.log(currentState);
 
     if (currentState === state.radarr.PROFILE) {
         verifyUser(user.id);
         logger.info(i18n.__('botChatQueryMoviesChoose', user.id, message));
         return radarr.sendProfileList(message);
     }
+    console.log(currentState);
 
     if (currentState === state.radarr.FOLDER) {
         verifyUser(user.id);
         logger.info(i18n.__('botChatQueryFolderChoose', user.id, message));
         return radarr.sendFolderList(message);
     }
-
+    console.log(currentState);
     if (currentState === state.radarr.ADD_MOVIE) {
         verifyUser(user.id);
         return radarr.sendAddMovie(message);
