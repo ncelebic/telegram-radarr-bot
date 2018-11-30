@@ -1,8 +1,10 @@
-Forked from onedr0p, working to port to Radarr for movie support. Will hopefully add support for use in a group chat. 
+Forked from eamondo2 who forked from onedr0p, working to port to Radarr for movie support. Will hopefully add support for use in a group chat. 
 
 # telegram-radarr-bot
 
 Bot which lets you or others add series to [Radarr](https://radarr.video/) via the messaging service [Telegram](https://telegram.org/).
+
+This uses a node:alpine base, so it will work on both x86 and arm.  Raspberry pi works wonderfully.
 
 Contact [@BotFather](http://telegram.me/BotFather) on Telegram to create and get a bot token.
 
@@ -27,13 +29,18 @@ npm install
 ```
 
 ```bash
-# Copy acl.json.template to acl.json
-cp acl.json.template acl.json
+# Make data directory
+mkdir /opt/telegram-radarr-bot-data
 ```
 
 ```bash
-# Copy config.json.template to config.json
-cp config.json.template config.json
+# Copy acl.json.template to /opt/telegram-radarr-bot-data/acl.json
+cp acl.json.template /opt/telegram-radarr-bot-data/acl.json
+```
+
+```bash
+# Copy config.json.template to /opt/telegram-radarr-bot-data/config.json
+cp config.json.template /opt/telegram-radarr-bot-data/config.json
 ```
 
 In `config.json` fill in the values below:
