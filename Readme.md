@@ -28,6 +28,8 @@ cd telegram-radarr-bot
 npm install
 ```
 
+**NOTE**: The following directory is for docker to mount the config.  If standalone, copy the files into the same directory.
+
 ```bash
 # Make data directory
 mkdir /opt/telegram-radarr-bot-data
@@ -187,24 +189,7 @@ Radarr can be setup to send notifications to a user or a group chat when new con
 * `/cid` gets current chat id
 
 ## Docker
-Alternatively you may use Docker to start the bot
-```
-docker run --name telegram-radarr-bot \
-  -e TELEGRAM_BOTTOKEN=
-  -e BOT_PASSWORD=
-  -e BOT_OWNER=
-  -e BOT_NOTIFYID=
-  -e BOT_MAXRESULTS=
-  -e RADARR_HOST=
-  -e RADARR_APIKEY=
-  -e RADARR_PORT=
-  -e RADARR_URLBASE=
-  -e RADARR_SSL=
-  -e RADARR_USERNAME=
-  -e RADARR_PASSWORD=
-  telegram-radarr-bot
-```
-
+You may use Docker to start the bot.  Check the included radarr-bot-run.sh script for reference, or it may be run as is.
 
 
 ## License
